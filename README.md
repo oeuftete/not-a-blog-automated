@@ -17,5 +17,11 @@ posts.
   nothing at all, though default formatting of the cells to be plain text (so
   they are not auto-detected as `hh:mm:ss`) would be nice.
 
+## Configuration
+
+* Generate Google Drive credentials via the [Python
+  quickstart][py-gdrive-quickstart].
+
 [not-a-blog]: https://dandoesnotblog.blogspot.com/
 [not-a-blog-the-end]: https://dandoesnotblog.blogspot.com/2019/09/friday-92719.html
+[py-gdrive-quickstart]: https://developers.google.com/drive/api/v3/quickstart/python
