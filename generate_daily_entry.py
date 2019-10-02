@@ -1,11 +1,26 @@
-def main():
+import datetime
+
+import click
+
+
+def tomorrow():
+    """Return tomorrow as YYYYMMDD."""
+    return (datetime.date.today() +
+            datetime.timedelta(days=1)).strftime('%Y%m%d')
+
+
+@click.command()
+@click.option('--date',
+              default=tomorrow(),
+              help='Date to generate as YYYYMMDD')
+def main(date):
     """
     Generate the daily blog entry for a given day.
     """
+    click.echo('Beginning blog entry generation...')
+    click.echo(f'  Date: {date}')
 
     #  Drive file generation
-    #
-    #  TODO: What date?  Pass by YYYYMMDD arg or default to current in Atlantic.
     #  TODO: Get the template file for the day of the week.
     #  TODO: Template files are by convention or just configurable IDs?
     #  TODO: Copy that to a file named conventionally, e.g. "Monday, 9/30/19"
@@ -18,6 +33,14 @@ def main():
     #  TODO: Generate the post if it doesn't exist.
     #  TODO: Post content is "Add your times here." anchor linked to the
     #  spreadsheet for the day.
+
+    #  Extracting from Dan's site:
+    #
+    #  <a href="https://docs.google.com/spreadsheets/d/{id}/edit?usp=sharing">Add your times here.</a>
+    #  <br />
+    #  <iframe src="https://docs.google.com/spreadsheets/d/e/{different-id}/pubhtml?gid=0&amp;single=true&amp;widget=true&amp;headers=false"></iframe>
+    #
+    #  The 'id' is just the 'id' attribute.  How do we get the embed link?
 
 
 if __name__ == '__main__':
