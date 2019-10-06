@@ -80,15 +80,22 @@ def main(date):
     click.echo(f'  Template ID: {template_id}')
 
     request_body = {'name': date.strftime('%A, %m/%-d/%y')}
-    api.drive_service.files().copy(fileId=template_id,
-                                   body=request_body).execute()
-
-    #  TODO: The template file may be restricted in permissions, but ensure the
-    #  daily file is open.
-    #  TODO: Don't create the file in the `templates` folder
 
     #  TODO: Don't create the daily file if it already exists.
-    #  TODO: Get a link for the daily file either way to add to the blog entry.
+    new_id = api.drive_service.files().copy(
+        fileId=template_id, body=request_body).execute().get('id')
+
+    #  The new file needs to be writable by all.  That's the point.
+    api.drive_service.permissions().create(fileId=new_id,
+                                           body={
+                                               'role': 'writer',
+                                               'type': 'anyone'
+                                           })
+
+    #  TODO: Don't create the file in the `templates` folder
+    #  TODO: Get links for the daily file either way to add to the blog entry.
+    #    TODO: anchor link
+    #    TODO: embed link
 
     #  Blog entry generation
     #  TODO: Generate the post if it doesn't exist.
