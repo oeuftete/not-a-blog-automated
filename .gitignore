@@ -1,3 +1,5 @@
 #  Google Drive integration specific
 credentials.json
-token.pickle
+token.pickle*
+
+__pycache__

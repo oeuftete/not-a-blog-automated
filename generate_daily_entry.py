@@ -1,12 +1,56 @@
 import datetime
+import os.path
+import pickle
 
 import click
+from googleapiclient.discovery import build
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+
+SCOPES = [
+    'https://www.googleapis.com/auth/drive',
+    'https://www.googleapis.com/auth/drive.appdata',
+    'https://www.googleapis.com/auth/drive.file',
+]
+
+
+class GoogleApi():
+    def __init__(self):
+        creds = None
+
+        # The file token.pickle stores the user's access and refresh tokens,
+        # and is created automatically when the authorization flow completes
+        # for the first time.
+        if os.path.exists('token.pickle'):
+            with open('token.pickle', 'rb') as token:
+                creds = pickle.load(token)
+        # If there are no (valid) credentials available, let the user log in.
+        if not creds or not creds.valid:
+            if creds and creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+            else:
+                flow = InstalledAppFlow.from_client_secrets_file(
+                    os.path.join(os.path.expanduser('~'),
+                                 '.gdrive-credentials-notablog.json'), SCOPES)
+                creds = flow.run_local_server(port=0)
+            # Save the credentials for the next run
+            with open('token.pickle', 'wb') as token:
+                pickle.dump(creds, token)
+
+        self.creds = creds
+
+    @property
+    def drive_service(self):
+        return build('drive', 'v3', credentials=self.creds)
+
+    @property
+    def blogger_service(self):
+        return build('blogger', 'v3', credentials=self.creds)
 
 
 def tomorrow():
-    """Return tomorrow as YYYYMMDD."""
-    return (datetime.date.today() +
-            datetime.timedelta(days=1)).strftime('%Y%m%d')
+    """Return tomorrow as a datetime date."""
+    return datetime.date.today() + datetime.timedelta(days=1)
 
 
 @click.command()
@@ -18,14 +62,31 @@ def main(date):
     Generate the daily blog entry for a given day.
     """
     click.echo('Beginning blog entry generation...')
-    click.echo(f'  Date: {date}')
+    click.echo('  Date: {}'.format(date.strftime('%Y%m%d')))
 
-    #  Drive file generation
-    #  TODO: Get the template file for the day of the week.
-    #  TODO: Template files are by convention or just configurable IDs?
-    #  TODO: Copy that to a file named conventionally, e.g. "Monday, 9/30/19"
+    #  DRIVE FILE GENERATION
+
+    #  Get the template file for the day of the week.  File must be
+    #  named as exactly "{day of week} template" in the Drive account.
+    dow = date.strftime('%A')
+    template_name = f'{dow} template'
+
+    api = GoogleApi()
+    template_id = api.drive_service.files().list(
+        pageSize=1,
+        q=f"name='{template_name}'",
+        fields="nextPageToken, files(id, name)").execute().get(
+            'files', [None])[0].get('id')
+    click.echo(f'  Template ID: {template_id}')
+
+    request_body = {'name': date.strftime('%A, %m/%-d/%y')}
+    api.drive_service.files().copy(fileId=template_id,
+                                   body=request_body).execute()
+
     #  TODO: The template file may be restricted in permissions, but ensure the
     #  daily file is open.
+    #  TODO: Don't create the file in the `templates` folder
+
     #  TODO: Don't create the daily file if it already exists.
     #  TODO: Get a link for the daily file either way to add to the blog entry.
 
