@@ -89,19 +89,21 @@ def get_drive_file(date):
     new_id = api.drive_service.files().copy(
         fileId=template_id, body=new_file_request_body).execute().get('id')
     click.echo(f'  New file created: [{new_id}]')
+    return new_id
 
-    #  The new file needs to be writable by all.  That's the point.
-    api.drive_service.permissions().create(fileId=new_id,
+
+def set_anyone_writer_permissions(file_id):
+    api = GoogleApi()
+
+    #  The new file needs to be writable by all.  That's the point.  This call
+    #  still works, and does not add a duplicate permission, if the permission
+    #  already exists.
+    api.drive_service.permissions().create(fileId=file_id,
                                            body={
                                                'role': 'writer',
                                                'type': 'anyone'
-                                           })
+                                           }).execute()
     click.echo('  New file permissions set.')
-
-    #  TODO: Don't create the file in the `templates` folder
-    #  TODO: Get links for the daily file either way to add to the blog entry.
-    #    TODO: anchor link
-    #    TODO: embed link
 
 
 @click.command()
@@ -116,6 +118,12 @@ def main(date):
     click.echo('  Date: {}'.format(date.strftime('%Y%m%d')))
 
     drive_file_id = get_drive_file(date)
+    set_anyone_writer_permissions(drive_file_id)
+
+    #  TODO: Don't create the file in the `templates` folder
+    #  TODO: Get links for the daily file either way to add to the blog entry.
+    #    TODO: anchor link
+    #    TODO: embed link
 
     #  Blog entry generation
     #  TODO: Generate the post if it doesn't exist.
