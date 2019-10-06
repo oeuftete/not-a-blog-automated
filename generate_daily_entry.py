@@ -47,10 +47,61 @@ class GoogleApi():
     def blogger_service(self):
         return build('blogger', 'v3', credentials=self.creds)
 
+    def get_file_id_by_name(self, name):
+        """Return the id of an untrashed file with the given name."""
+        r = self.drive_service.files().list(
+            pageSize=1,
+            q=f"name='{name}' and trashed=false",
+            fields="nextPageToken, files(id, name)").execute().get(
+                'files', [None])
+        if r:
+            return r[0].get('id')
+
 
 def tomorrow():
     """Return tomorrow as a datetime date."""
     return datetime.date.today() + datetime.timedelta(days=1)
+
+
+def get_drive_file(date):
+    api = GoogleApi()
+
+    target_file_name = date.strftime('%A, %m/%-d/%y')
+    target_id = api.get_file_id_by_name(target_file_name)
+
+    if target_id:
+        click.echo(f'  File already exists: [{target_id}]')
+        return target_id
+
+    #  Get the template file for the day of the week.  File must be
+    #  named as exactly "{day of week} template" in the Drive account.
+    dow = date.strftime('%A')
+    template_name = f'{dow} template'
+
+    template_id = api.get_file_id_by_name(template_name)
+    if not template_id:
+        raise click.ClickException(
+            f'No template file found for [{template_name}]!')
+
+    click.echo(f'  Template ID: [{template_id}]')
+
+    new_file_request_body = {'name': date.strftime('%A, %m/%-d/%y')}
+    new_id = api.drive_service.files().copy(
+        fileId=template_id, body=new_file_request_body).execute().get('id')
+    click.echo(f'  New file created: [{new_id}]')
+
+    #  The new file needs to be writable by all.  That's the point.
+    api.drive_service.permissions().create(fileId=new_id,
+                                           body={
+                                               'role': 'writer',
+                                               'type': 'anyone'
+                                           })
+    click.echo('  New file permissions set.')
+
+    #  TODO: Don't create the file in the `templates` folder
+    #  TODO: Get links for the daily file either way to add to the blog entry.
+    #    TODO: anchor link
+    #    TODO: embed link
 
 
 @click.command()
@@ -64,38 +115,7 @@ def main(date):
     click.echo('Beginning blog entry generation...')
     click.echo('  Date: {}'.format(date.strftime('%Y%m%d')))
 
-    #  DRIVE FILE GENERATION
-
-    #  Get the template file for the day of the week.  File must be
-    #  named as exactly "{day of week} template" in the Drive account.
-    dow = date.strftime('%A')
-    template_name = f'{dow} template'
-
-    api = GoogleApi()
-    template_id = api.drive_service.files().list(
-        pageSize=1,
-        q=f"name='{template_name}'",
-        fields="nextPageToken, files(id, name)").execute().get(
-            'files', [None])[0].get('id')
-    click.echo(f'  Template ID: {template_id}')
-
-    request_body = {'name': date.strftime('%A, %m/%-d/%y')}
-
-    #  TODO: Don't create the daily file if it already exists.
-    new_id = api.drive_service.files().copy(
-        fileId=template_id, body=request_body).execute().get('id')
-
-    #  The new file needs to be writable by all.  That's the point.
-    api.drive_service.permissions().create(fileId=new_id,
-                                           body={
-                                               'role': 'writer',
-                                               'type': 'anyone'
-                                           })
-
-    #  TODO: Don't create the file in the `templates` folder
-    #  TODO: Get links for the daily file either way to add to the blog entry.
-    #    TODO: anchor link
-    #    TODO: embed link
+    drive_file_id = get_drive_file(date)
 
     #  Blog entry generation
     #  TODO: Generate the post if it doesn't exist.
