@@ -63,7 +63,8 @@ def tomorrow():
     return datetime.date.today() + datetime.timedelta(days=1)
 
 
-def get_drive_file(date):
+def create_daily(date):
+    """Create (if necessary) the specified daily spreadsheet."""
     api = GoogleApi()
 
     target_file_name = date.strftime('%A, %m/%-d/%y')
@@ -96,6 +97,7 @@ def get_drive_file(date):
 
 
 def set_anyone_writer_permissions(file_id):
+    """Set global write permission for a file by id."""
     api = GoogleApi()
 
     #  The new file needs to be writable by all.  That's the point.  This call
@@ -109,6 +111,20 @@ def set_anyone_writer_permissions(file_id):
     click.echo('  New file permissions set.')
 
 
+def publish_file(file_id):
+    """Publish a file by id to allow embedding."""
+
+    # HT: https://stackoverflow.com/a/38617031/7674
+    api = GoogleApi()
+    api.drive_service.revisions().update(fileId=file_id,
+                                         revisionId='1',
+                                         body={
+                                             'published': True,
+                                             'publishAuto': True
+                                         }).execute()
+    click.echo('  File published for web embedding.')
+
+
 @click.command()
 @click.option('--date',
               default=tomorrow(),
@@ -120,8 +136,9 @@ def main(date):
     click.echo('Beginning blog entry generation...')
     click.echo('  Date: {}'.format(date.strftime('%Y%m%d')))
 
-    drive_file_id = get_drive_file(date)
+    drive_file_id = create_daily(date)
     set_anyone_writer_permissions(drive_file_id)
+    publish_file(drive_file_id)
 
     #  TODO: Get links for the daily file either way to add to the blog entry.
     #    TODO: anchor link
@@ -139,6 +156,9 @@ def main(date):
     #  <iframe src="https://docs.google.com/spreadsheets/d/e/{different-id}/pubhtml?gid=0&amp;single=true&amp;widget=true&amp;headers=false"></iframe>
     #
     #  The 'id' is just the 'id' attribute.  How do we get the embed link?
+    #    TODO: Based on the SO link I found, the regular id should work in the
+    #    iframe embedding.  Not sure what the different id is in Dan's posts
+    #    yet, or if it matters.
 
 
 if __name__ == '__main__':
