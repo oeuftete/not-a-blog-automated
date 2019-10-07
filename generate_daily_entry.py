@@ -213,6 +213,14 @@ def main(date, blog_url):
     Generate the daily blog entry for a given day.
     """
     click.echo('Beginning blog entry generation...')
+
+    if isinstance(date, str):
+        try:
+            date = datetime.date(int(date[:4]), int(date[4:6]), int(date[6:]))
+        except ValueError:
+            raise click.ClickException(
+                f'Given date [{date}] was probably invalid')
+
     click.echo('  Date: {}'.format(date.strftime('%Y%m%d')))
 
     drive_file_id = create_daily_sheet(date)
