@@ -64,7 +64,52 @@ def tomorrow():
     return datetime.date.today() + datetime.timedelta(days=1)
 
 
-def create_daily(date):
+def create_daily_post(date, blog_id, sheet_id):
+    """Create the daily blog post if necessary."""
+
+    api = GoogleApi()
+    #  Does the post exist?  Look for it.
+
+    #  TODO: DRY
+    target_post_name = date.strftime('%A, %m/%-d/%y')
+    thirty_days_ago = (datetime.datetime.now(datetime.timezone.utc) -
+                       datetime.timedelta(days=30)).isoformat()
+
+    post_hits = api.blogger_service.posts().list(
+        blogId=blog_id,
+        status=['draft', 'live', 'scheduled'],
+        startDate=thirty_days_ago).execute()
+    if list(
+            filter(lambda p: p.get('title') == target_post_name,
+                   post_hits.get('items'))):
+        click.echo(f'  Post already exists for [{target_post_name}]')
+        return
+
+    #  Post didn't exist, let's make it.
+    anchor_url = ('https://docs.google.com/spreadsheets/d/'
+                  f'{sheet_id}/edit?usp=sharing')
+
+    embed_url = ('https://docs.google.com/spreadsheets/d/'
+                 f'{sheet_id}/preview?usp=sharing')
+
+    content = f'''
+<a href="{anchor_url}">Add your times here</a>.
+<br />
+<iframe src="{embed_url}"></iframe>
+'''
+
+    post = api.blogger_service.posts().insert(blogId=blog_id,
+                                              body={
+                                                  'content': content,
+                                                  'labels':
+                                                  date.strftime('%A'),
+                                                  'title': target_post_name,
+                                              },
+                                              isDraft=True).execute()
+    click.echo('  Draft post created: [{}]'.format(post.get('id')))
+
+
+def create_daily_sheet(date):
     """Create (if necessary) the specified daily spreadsheet."""
     api = GoogleApi()
 
@@ -132,6 +177,7 @@ def get_blog_id_by_url(url):
         blog_id = api.blogger_service.blogs().getByUrl(
             url=url).execute().get('id')
         click.echo(f'  Found blog id: [{blog_id}]')
+        return blog_id
     except GoogleApiHttpError:
         pass  # Not found
 
@@ -140,31 +186,26 @@ def get_blog_id_by_url(url):
 @click.option('--date',
               default=tomorrow(),
               help='Date to generate as YYYYMMDD')
-def main(date):
+@click.option('--blog-url',
+              default='https://danstilldoesnnotblog.blogspot.com/',
+              help='The Blogger blog to post to')
+def main(date, blog_url):
     """
     Generate the daily blog entry for a given day.
     """
     click.echo('Beginning blog entry generation...')
     click.echo('  Date: {}'.format(date.strftime('%Y%m%d')))
 
-    drive_file_id = create_daily(date)
+    drive_file_id = create_daily_sheet(date)
     set_anyone_writer_permissions(drive_file_id)
     publish_file(drive_file_id)
 
-    anchor_url = ('https://docs.google.com/spreadsheets/d/'
-                  f'{drive_file_id}/edit?usp=sharing')
+    blog_id = get_blog_id_by_url(blog_url)
+    create_daily_post(date, blog_id, drive_file_id)
 
-    embed_url = ('https://docs.google.com/spreadsheets/d/'
-                 f'e/{drive_file_id}/pubhtml?'
-                 'gid=0&amp;single=true&amp;widget=true&amp;headers=false')
-
-    #  Blog entry generation
-    #  TODO: Generate the post if it doesn't exist.
-    BLOG_URL = 'https://danstilldoesnnotblog.blogspot.com/'
-
-    blog_id = get_blog_id_by_url(BLOG_URL)
     #  TODO: Post content is "Add your times here." anchor linked to the
     #  spreadsheet for the day.
+    #  TODO: Add label for day of week.
 
     #  Extracting from Dan's site:
     #
