@@ -28,6 +28,7 @@ ptyprocess==0.6.0         # via pexpect
 pyasn1-modules==0.2.6     # via google-auth
 pyasn1==0.4.7             # via pyasn1-modules, rsa
 pygments==2.4.2           # via ipython
+pytz==2019.3
 requests-oauthlib==1.2.0  # via google-auth-oauthlib
 requests==2.22.0          # via requests-oauthlib
 rsa==4.0                  # via google-auth
@@ -39,4 +40,4 @@ wcwidth==0.1.7            # via prompt-toolkit
 yapf==0.28.0
 
 # The following packages are considered to be unsafe in a requirements file:
-# setuptools==41.2.0        # via ipython
+# setuptools==41.4.0        # via ipython

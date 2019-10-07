@@ -7,6 +7,7 @@ from googleapiclient.discovery import build
 from googleapiclient.http import HttpError as GoogleApiHttpError
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
+import pytz
 
 
 class GoogleApi():
@@ -81,8 +82,9 @@ def create_daily_post(date, blog_id, sheet_id):
         startDate=thirty_days_ago).execute()
     if list(
             filter(lambda p: p.get('title') == target_post_name,
-                   post_hits.get('items'))):
+                   post_hits.get('items', {}))):
         click.echo(f'  Post already exists for [{target_post_name}]')
+        click.echo('  You may need to schedule it manually.')
         return
 
     #  Post didn't exist, let's make it.
@@ -102,11 +104,25 @@ def create_daily_post(date, blog_id, sheet_id):
                                               body={
                                                   'content': content,
                                                   'labels':
-                                                  date.strftime('%A'),
+                                                  [date.strftime('%A')],
                                                   'title': target_post_name,
                                               },
                                               isDraft=True).execute()
-    click.echo('  Draft post created: [{}]'.format(post.get('id')))
+
+    post_id = post.get('id')
+    if not post_id:
+        raise click.ClickException(
+            '  No post id: something went wrong with draft creation')
+
+    click.echo(f'  Draft post created: [{post_id}]')
+
+    publish_date = pytz.timezone('US/Eastern').localize(
+        datetime.datetime.combine(date, datetime.time(22, 0, 0, 0)))
+
+    api.blogger_service.posts().publish(
+        blogId=blog_id, postId=post_id,
+        publishDate=publish_date.isoformat()).execute()
+    click.echo('  Post scheduled.')
 
 
 def create_daily_sheet(date):
