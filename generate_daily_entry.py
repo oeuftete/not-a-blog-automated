@@ -140,9 +140,12 @@ def main(date):
     set_anyone_writer_permissions(drive_file_id)
     publish_file(drive_file_id)
 
-    #  TODO: Get links for the daily file either way to add to the blog entry.
-    #    TODO: anchor link
-    #    TODO: embed link
+    anchor_url = ('https://docs.google.com/spreadsheets/d/'
+                  f'{drive_file_id}/edit?usp=sharing')
+
+    embed_url = ('https://docs.google.com/spreadsheets/d/'
+                 f'e/{drive_file_id}/pubhtml?'
+                 'gid=0&amp;single=true&amp;widget=true&amp;headers=false')
 
     #  Blog entry generation
     #  TODO: Generate the post if it doesn't exist.
