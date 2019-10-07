@@ -20,6 +20,8 @@ class GoogleApi():
     def __init__(self):
         creds = None
 
+        # TODO: Let the pickled token location be configurable.
+        #
         # The file token.pickle stores the user's access and refresh tokens,
         # and is created automatically when the authorization flow completes
         # for the first time.
@@ -31,6 +33,7 @@ class GoogleApi():
             if creds and creds.expired and creds.refresh_token:
                 creds.refresh(Request())
             else:
+                #  TODO: The json credentials should be configurable.
                 flow = InstalledAppFlow.from_client_secrets_file(
                     os.path.join(os.path.expanduser('~'),
                                  '.gdrive-credentials-notablog.json'), SCOPES)
@@ -65,6 +68,8 @@ def tomorrow():
     return datetime.date.today() + datetime.timedelta(days=1)
 
 
+#  TODO: Some of these methods should be in their own class or maybe our
+#  GoogleApi class since they start by instantiating the API.
 def create_daily_post(date, blog_id, sheet_id):
     """Create the daily blog post if necessary."""
 
@@ -201,6 +206,7 @@ def get_blog_id_by_url(url):
         pass  # Not found
 
 
+#  MAIN
 @click.command()
 @click.option('--date',
               default=tomorrow(),
@@ -229,21 +235,6 @@ def main(date, blog_url):
 
     blog_id = get_blog_id_by_url(blog_url)
     create_daily_post(date, blog_id, drive_file_id)
-
-    #  TODO: Post content is "Add your times here." anchor linked to the
-    #  spreadsheet for the day.
-    #  TODO: Add label for day of week.
-
-    #  Extracting from Dan's site:
-    #
-    #  <a href="https://docs.google.com/spreadsheets/d/{id}/edit?usp=sharing">Add your times here.</a>
-    #  <br />
-    #  <iframe src="https://docs.google.com/spreadsheets/d/e/{different-id}/pubhtml?gid=0&amp;single=true&amp;widget=true&amp;headers=false"></iframe>
-    #
-    #  The 'id' is just the 'id' attribute.  How do we get the embed link?
-    #    TODO: Based on the SO link I found, the regular id should work in the
-    #    iframe embedding.  Not sure what the different id is in Dan's posts
-    #    yet, or if it matters.
 
 
 if __name__ == '__main__':
