@@ -4,17 +4,18 @@ import pickle
 
 import click
 from googleapiclient.discovery import build
+from googleapiclient.http import HttpError as GoogleApiHttpError
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
-SCOPES = [
-    'https://www.googleapis.com/auth/drive',
-    'https://www.googleapis.com/auth/drive.appdata',
-    'https://www.googleapis.com/auth/drive.file',
-]
-
 
 class GoogleApi():
+
+    SCOPES = [
+        'https://www.googleapis.com/auth/blogger',
+        'https://www.googleapis.com/auth/drive',
+    ]
+
     def __init__(self):
         creds = None
 
@@ -125,6 +126,16 @@ def publish_file(file_id):
     click.echo('  File published for web embedding.')
 
 
+def get_blog_id_by_url(url):
+    api = GoogleApi()
+    try:
+        blog_id = api.blogger_service.blogs().getByUrl(
+            url=url).execute().get('id')
+        click.echo(f'  Found blog id: [{blog_id}]')
+    except GoogleApiHttpError:
+        pass  # Not found
+
+
 @click.command()
 @click.option('--date',
               default=tomorrow(),
@@ -149,6 +160,9 @@ def main(date):
 
     #  Blog entry generation
     #  TODO: Generate the post if it doesn't exist.
+    BLOG_URL = 'https://danstilldoesnnotblog.blogspot.com/'
+
+    blog_id = get_blog_id_by_url(BLOG_URL)
     #  TODO: Post content is "Add your times here." anchor linked to the
     #  spreadsheet for the day.
 
