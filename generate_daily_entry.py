@@ -36,7 +36,8 @@ class GoogleApi():
                 #  TODO: The json credentials should be configurable.
                 flow = InstalledAppFlow.from_client_secrets_file(
                     os.path.join(os.path.expanduser('~'),
-                                 '.gdrive-credentials-notablog.json'), SCOPES)
+                                 '.gdrive-credentials-notablog.json'),
+                    self.SCOPES)
                 creds = flow.run_local_server(port=0)
             # Save the credentials for the next run
             with open('token.pickle', 'wb') as token:
