@@ -122,11 +122,12 @@ def create_daily_post(date, blog_id, sheet_id):
 
     click.echo(f'  Draft post created: [{post_id}]')
 
-    #  Publish at 7pm Eastern.  This is a bit earlier than Dan's posts, and
-    #  earlier than many puzzles are available, but useful for ones that do
-    #  come in earlier, like Fireball at times, maybe others.
+    #  Publish at 7pm Eastern the day before.  This is a bit earlier than Dan's
+    #  posts, and earlier than many puzzles are available, but useful for ones
+    #  that do come in earlier, like Fireball at times, maybe others.
     publish_date = pytz.timezone('US/Eastern').localize(
-        datetime.datetime.combine(date, datetime.time(19, 0, 0, 0)))
+        datetime.datetime.combine(date - datetime.timedelta(days=1),
+                                  datetime.time(19, 0, 0, 0)))
 
     api.blogger_service.posts().publish(
         blogId=blog_id, postId=post_id,
