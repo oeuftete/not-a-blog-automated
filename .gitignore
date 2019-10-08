@@ -1,0 +1,7 @@
+#  Google Drive integration specific
+credentials.json
+token.pickle*
+
+__pycache__
+
+log/
