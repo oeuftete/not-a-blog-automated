@@ -214,7 +214,7 @@ def get_blog_id_by_url(url):
               default=tomorrow(),
               help='Date to generate as YYYYMMDD')
 @click.option('--blog-url',
-              default='https://danstilldoesnnotblog.blogspot.com/',
+              default='https://crosswordsolvingtimes.blogspot.com/',
               help='The Blogger blog to post to')
 def main(date, blog_url):
     """
