@@ -78,7 +78,7 @@ def create_daily_post(date, blog_id, sheet_id):
     #  Does the post exist?  Look for it.
 
     #  TODO: DRY
-    target_post_name = date.strftime('%A, %m/%-d/%y')
+    target_post_name = date.strftime('%A, %-m/%-d/%y')
     thirty_days_ago = (datetime.datetime.now(datetime.timezone.utc) -
                        datetime.timedelta(days=30)).isoformat()
 
@@ -139,7 +139,7 @@ def create_daily_sheet(date):
     """Create (if necessary) the specified daily spreadsheet."""
     api = GoogleApi()
 
-    target_file_name = date.strftime('%A, %m/%-d/%y')
+    target_file_name = date.strftime('%A, %-m/%-d/%y')
     target_id = api.get_file_id_by_name(target_file_name)
 
     if target_id:
@@ -159,7 +159,7 @@ def create_daily_sheet(date):
     click.echo(f'  Template ID: [{template_id}]')
 
     new_file_request_body = {
-        'name': date.strftime('%A, %m/%-d/%y'),
+        'name': date.strftime('%A, %-m/%-d/%y'),
         'parents': [api.get_file_id_by_name('daily')]
     }
     new_id = api.drive_service.files().copy(
