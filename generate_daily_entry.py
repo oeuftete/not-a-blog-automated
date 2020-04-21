@@ -8,6 +8,7 @@ from googleapiclient.http import HttpError as GoogleApiHttpError
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 import pytz
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 
 class GoogleApi():
@@ -71,6 +72,7 @@ def tomorrow():
 
 #  TODO: Some of these methods should be in their own class or maybe our
 #  GoogleApi class since they start by instantiating the API.
+@retry(wait=wait_fixed(2), stop=stop_after_attempt(7))
 def create_daily_post(date, blog_id, sheet_id):
     """Create the daily blog post if necessary."""
 
