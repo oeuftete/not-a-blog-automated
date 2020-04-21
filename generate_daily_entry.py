@@ -84,7 +84,7 @@ def create_daily_post(date, blog_id, sheet_id):
 
     post_hits = api.blogger_service.posts().list(
         blogId=blog_id,
-        status=['draft', 'live', 'scheduled'],
+        status=['DRAFT', 'LIVE', 'SCHEDULED'],
         startDate=thirty_days_ago).execute()
     if list(
             filter(lambda p: p.get('title') == target_post_name,
